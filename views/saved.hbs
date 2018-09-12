@@ -1,0 +1,42 @@
+<nav class="navbar navbar-dark bg-dark">
+    <a class="navbar-brand" href="/">Danny's News!</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarText" aria-controls="navbarText"
+        aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+        <ul class="navbar-nav mr-auto">
+            <li class="nav-item">
+                <a class="nav-link active" href="/saved">My Saved Articles</a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/scrape">Scrape Again!</a>
+            </li>
+        </ul>
+        <span class="navbar-text">
+            You're an awesome person, don't forget that.
+        </span>
+    </div>
+</nav>
+
+<div class="container">
+  {{#if articles}}
+    {{#each articles}}
+    <div class="card bg-dark text-light mt-3">
+      <div class="card-body">
+        <span class="card-title">
+          <a href="{{this.link}}" target="_blank">{{this.title}}</a>
+        </span>
+        <p>{{this.summary}}</p>
+      </div>
+      <div class="card-link">
+        <p>link goes here</p>
+      </div>
+    </div>
+    {{/each}}
+  {{else}}
+    <div class="card bg-dark text-light mt-3">
+      <h2>Nothing to see here!</h2>
+    </div>
+  {{/if}}
+</div>
