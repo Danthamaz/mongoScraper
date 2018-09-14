@@ -3,6 +3,7 @@ const exphbs = require("express-handlebars");
 const bodyParser = require("body-parser");
 const logger = require("morgan");
 const mongoose = require("mongoose");
+// Axios instead of request
 const axios = require("axios");
 const cheerio = require("cheerio");
 
@@ -38,7 +39,10 @@ app.engine(
 app.set("view engine", ".hbs");
 
 // Database configuration with mongoose
-mongoose.connect("mongodb://localhost/scraper");
+// mongoose.connect("mongodb://localhost/scraper");
+let MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+mongoose.Promise = Promise;
+mongoose.connect(MONGODB_URI);
 const db = mongoose.connection;
 
 // Show any mongoose errors
@@ -68,21 +72,22 @@ app.get("/", function(req, res) {
     });
 });
 
+// Scrape news site for articles
 app.get("/scrape", function(req, res) {
-  axios.get("https://slashdot.org/").then(function(response) {
+  axios.get("https://medium.com/").then(function(response) {
     const $ = cheerio.load(response.data);
-    $("article[id]").each(function(i, element) {
+    console.log($);
+    $(".extremeHero-titleClamp").each(function(i, element) {
       let result = {};
       result.title = $(element)
-        .find("h2 span.story-title a")
+        .children()
         .text();
       result.link = $(element)
-        .find("h2 span.story-title a")
+        .children()
         .attr("href");
       result.summary = $(element)
-        .find("div.p")
-        .text()
-        .trim();
+        .children()
+        .attr("class", "ui-summary");
       Article.update(
         { title: result.title },
         result,
@@ -93,6 +98,7 @@ app.get("/scrape", function(req, res) {
           }
         }
       );
+      console.log("Scrap result: " + result);
     });
     // Load the results on the page! :D
     res.redirect("/");
@@ -101,19 +107,15 @@ app.get("/scrape", function(req, res) {
 
 // Adds or removes articles
 app.post("/save/:route/:id", function(req, res) {
-  if (req.params.route === "index") {
-    req.params.route = "";
-  }
-
   Article.findOneAndUpdate(
     { _id: req.params.id },
     { saved: req.body.saved }
-  ).then(function(error, doc) {
-    if (err) {
+  ).exec(function(error, doc) {
+    if (error) {
       console.log(error);
     } else {
       console.log("doc", doc);
-      res.redirect("/" + req.params.route);
+      res.redirect("/saved");
     }
   });
 });
@@ -148,7 +150,7 @@ app.post("/comment/:id", function(req, res) {
         { _id: req.params.id },
         { $push: { comments: doc._id } },
         { new: true }
-      ).then(function(err, doc) {
+      ).exec(function(err, doc) {
         if (err) {
           console.log(err);
         } else {
