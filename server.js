@@ -41,7 +41,8 @@ app.set("view engine", ".hbs");
 
 // Database configuration with mongoose
 // mongoose.connect("mongodb://localhost/scraper");
-let MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+let MONGODB_URI =
+  process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
 mongoose.Promise = Promise;
 mongoose.connect(MONGODB_URI);
 const db = mongoose.connection;
@@ -74,53 +75,21 @@ app.get("/", function(req, res) {
 });
 
 // Scrape news site for articles
-// app.get("/scrape", function(req, res) {
-//   axios.get("https://medium.com/").then(function(response) {
-//     const $ = cheerio.load(response.data);
-//     console.log($);
-//     $(".extremeHero-titleClamp").each(function(i, element) {
-//       let result = {};
-//       result.title = $(element)
-//         .children()
-//         .text();
-//       result.link = $(element)
-//         .children()
-//         .attr("href");
-//       result.summary = $(element)
-//         .children()
-//         .attr("class", "ui-summary");
-//       Article.update(
-//         { title: result.title },
-//         result,
-//         { new: true, upsert: true, setDefaultsOnInsert: true },
-//         function(err, doc) {
-//           if (err) {
-//             console.log("Error:", err);
-//           }
-//         }
-//       );
-//       console.log("Scrap result: " + result);
-//     });
-//     // Load the results on the page! :D
-//     res.redirect("/");
-//   });
-// });
-
 app.get("/scrape", function(req, res) {
-  request("http://www.medium.com", function(error, response, html) {
-    const $ = cheerio.load(html);
-    console.log($);
-    $(".extremeHero-titleClamp").each(function(i, element) {
+  axios.get("https://slashdot.org/").then(function(response) {
+    const $ = cheerio.load(response.data);
+    $("article[id]").each(function(i, element) {
       let result = {};
       result.title = $(element)
-        .children()
+        .find("h2 span.story-title a")
         .text();
       result.link = $(element)
-        .children()
+        .find("h2 span.story-title a")
         .attr("href");
       result.summary = $(element)
-        .children()
-        .attr("class", "ui-summary");
+        .find("div.p")
+        .text()
+        .trim();
       Article.update(
         { title: result.title },
         result,
@@ -131,7 +100,6 @@ app.get("/scrape", function(req, res) {
           }
         }
       );
-      console.log("Scrap result: " + result);
     });
     // Load the results on the page! :D
     res.redirect("/");
