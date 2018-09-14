@@ -74,7 +74,7 @@ app.get("/", function(req, res) {
     });
 });
 
-// Scrape news site for articles
+// Scrape news site slashdot for articles
 app.get("/scrape", function(req, res) {
   axios.get("https://slashdot.org/").then(function(response) {
     const $ = cheerio.load(response.data);
