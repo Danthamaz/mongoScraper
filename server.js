@@ -6,6 +6,7 @@ const mongoose = require("mongoose");
 // Axios instead of request
 const axios = require("axios");
 const cheerio = require("cheerio");
+const request = require("request");
 
 // Require all models!
 const Comment = require("./models/Comment");
@@ -73,9 +74,41 @@ app.get("/", function(req, res) {
 });
 
 // Scrape news site for articles
+// app.get("/scrape", function(req, res) {
+//   axios.get("https://medium.com/").then(function(response) {
+//     const $ = cheerio.load(response.data);
+//     console.log($);
+//     $(".extremeHero-titleClamp").each(function(i, element) {
+//       let result = {};
+//       result.title = $(element)
+//         .children()
+//         .text();
+//       result.link = $(element)
+//         .children()
+//         .attr("href");
+//       result.summary = $(element)
+//         .children()
+//         .attr("class", "ui-summary");
+//       Article.update(
+//         { title: result.title },
+//         result,
+//         { new: true, upsert: true, setDefaultsOnInsert: true },
+//         function(err, doc) {
+//           if (err) {
+//             console.log("Error:", err);
+//           }
+//         }
+//       );
+//       console.log("Scrap result: " + result);
+//     });
+//     // Load the results on the page! :D
+//     res.redirect("/");
+//   });
+// });
+
 app.get("/scrape", function(req, res) {
-  axios.get("https://medium.com/").then(function(response) {
-    const $ = cheerio.load(response.data);
+  request("http://www.medium.com", function(error, response, html) {
+    const $ = cheerio.load(html);
     console.log($);
     $(".extremeHero-titleClamp").each(function(i, element) {
       let result = {};
