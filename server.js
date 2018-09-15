@@ -3,8 +3,6 @@ const exphbs = require("express-handlebars");
 const bodyParser = require("body-parser");
 const logger = require("morgan");
 const mongoose = require("mongoose");
-// Axios instead of request
-const axios = require("axios");
 const cheerio = require("cheerio");
 const request = require("request");
 
@@ -74,33 +72,38 @@ app.get("/", function(req, res) {
     });
 });
 
-// Scrape news site slashdot for articles
+// Scrape news site medium for featured articles
 app.get("/scrape", function(req, res) {
-  axios.get("https://slashdot.org/").then(function(response) {
-    const $ = cheerio.load(response.data);
-    $("article[id]").each(function(i, element) {
-      let result = {};
-      result.title = $(element)
-        .find("h2 span.story-title a")
-        .text();
-      result.link = $(element)
-        .find("h2 span.story-title a")
-        .attr("href");
-      result.summary = $(element)
-        .find("div.p")
-        .text()
-        .trim();
-      Article.update(
-        { title: result.title },
-        result,
-        { new: true, upsert: true, setDefaultsOnInsert: true },
-        function(err, doc) {
-          if (err) {
-            console.log("Error:", err);
+  request("https://medium.com/", function(error, response, html) {
+    if (!error && response.statusCode == 200) {
+      const $ = cheerio.load(html);
+      $("div.extremeHero-titleClamp").each(function(i, element) {
+        let result = {};
+        result.title = $(element)
+          .children(".ds-link")
+          .children(".ui-h4")
+          .text()
+          .trim();
+        result.link = $(element)
+          .children()
+          .attr("href");
+        result.summary = $(element)
+          .children(".ds-link")
+          .next()
+          .children(".ui-summary")
+          .text();
+        Article.update(
+          { title: result.title },
+          result,
+          { new: true, upsert: true, setDefaultsOnInsert: true },
+          function(err, doc) {
+            if (err) {
+              console.log("Error:", err);
+            }
           }
-        }
-      );
-    });
+        );
+      });
+    }
     // Load the results on the page! :D
     res.redirect("/");
   });
